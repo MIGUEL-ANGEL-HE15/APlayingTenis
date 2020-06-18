@@ -87,4 +87,46 @@ class API_M extends CI_Model{
     public function GenerarToken($length = 8) {
         return substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@%$#=-!"), 0, $length);
     }
-}?>
+
+//ACTUALIZAR LOS DATOS DE UN ENTRENADOR
+    function UpdateEntrenador(){
+        $ID_ENTRENADOR=$this->input->get('ID_ENTRENADOR');
+        $pass_encrip = hash('whirlpool',$this->input->get('Contrasenia'));
+        $datosEntrenador = array(
+            'Nombre'=>$this->input->get('Nombre'),
+            'Apellidos'=>$this->input->get('Apellidos'),
+            'Sexo'=>$this->input->get('Sexo'),
+            'Club'=>$this->input->get('Club'),
+            'Email'=>$this->input->get('Email'),
+            'Telefono'=>$this->input->get('Telefono')
+            );
+        $datosCuenta = array(
+            'Email'=>$this->input->get('Email'),
+            'Contrasenia'=>$pass_encrip
+        );
+        $this->db->trans_begin();
+        $this->db->where('Id_Entrenador', $ID_ENTRENADOR);
+        $this->db->update('entrenador', $datosEntrenador);
+
+        $this->db->where('Id_Persona', $ID_ENTRENADOR);
+        $this->db->where('Id_Rol', 1);
+        $this->db->update('cuenta', $datosCuenta);
+        $this->updateDireccion($ID_ENTRENADOR,1,$this->input->get('Calle'),$this->input->get('Colonia'),
+            $this->input->get('N_E'),$this->input->get('N_I'),$this->input->get('Municipio'),
+            $this->input->get('Estado'));
+        if($this->db->trans_status()===FALSE){
+            $this->db->trans_rollback();
+            $arr = array(
+                'titulo' => 'Actualizacion',
+                'Mensaje' => 'Error',
+                'sugerencia' => 'Inicia Sesion'
+            );
+            echo json_encode($arr);
+        }else{
+            $this->db->trans_commit();
+            $datos = $this->db->query('SELECT * FROM entrenador,direccion,cuenta WHERE entrenador.Id_Entrenador='.$ID_ENTRENADOR.' AND direccion.Id_Persona='.$ID_ENTRENADOR.' AND direccion.Id_Rol=1 AND cuenta.Id_Rol=1 AND cuenta.Id_Persona='.$ID_ENTRENADOR);
+            echo json_encode($datos->result_array());
+        }
+    }
+}
+?>
