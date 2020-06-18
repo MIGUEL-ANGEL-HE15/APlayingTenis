@@ -39,15 +39,15 @@ class API_M extends CI_Model{
     }
 
 
-//REGITRAR NUEVO ENTRENADOR
-    public function NuevoEntrenador(){
-        function generateToken($length = 8) {//generador de token para identificar el usuario
-        return substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@%$#=-!"), 0, $length);
-        }
-
-        $token=generateToken();//solicitar un token para el nuevo registro
-        $datosEntrenador = array(//carrgar en un array los datos a registra
-			'Nombre'=>$this->input->get('Nombre'),
+ //REGISTRAR UN NUEVO ENTRENADOR
+    function InsertEntrenador(){
+        $token=$this->GenerarToken();//obtener token
+        $id_NuevoEntrenador;
+        $pass_encrip = hash('whirlpool',$this->input->get('Contrasenia'));//encriptar pass
+        $rol = 1;//numero del rol
+        //array de los datos del entrenador
+        $datosEntrenador = array(
+            'Nombre'=>$this->input->get('Nombre'),
             'Apellidos'=>$this->input->get('Apellidos'),
             'Sexo'=>$this->input->get('Sexo'),
             'Club'=>$this->input->get('Club'),
@@ -55,69 +55,34 @@ class API_M extends CI_Model{
             'Telefono'=>$this->input->get('Telefono'),
             'Token'=>$token
             );
-        $this->db->insert('entrenador', $datosEntrenador);//mandar los datos a BD
-		if($this->db->affected_rows() > 0){//verificar si se realizo el registro en la tabla entrenador
-            //obtener el ID que le fue asignado al entrenador identificandolo por el token generado
-            $query_user = $this->db->query('SELECT Id_Entrenador FROM entrenador WHERE Token="'.$token.'"');
-            $id_P = $query_user->result();//asigar el resultado a una varible
-            $id_x;//variable que guardara el ID del nuevo entrenador
-            foreach($id_P as $id_persona){
-                $id_x = $id_persona->Id_Entrenador;//asignar el ID a la varible
-            }
-            //Encriptar la contraseña utilizando el metodo whirlpool
-            $pass_encrip = hash('whirlpool',$this->input->get('Contrasenia'));
-            $rol = 'entrenador';//Constante del metodo Registra un entrenador
-            $datosCuenta = array(//cargar en un array los datos de la nueva cuenta
-                'Email'=>$this->input->get('Email'),
-                'Contrasenia'=>$pass_encrip,
-                'Rol'=>$rol,
-                'Id_Persona'=>$id_x
-                );
-            $this->db->insert('cuenta', $datosCuenta);//insertar los datos a la tabla cuenta
-            if($this->db->affected_rows() > 0){ //verificar Si se registro los datos a la tabla cuenta
-                $DireccionEntrenador = array(//cargar en un array los datos a registrar
-                    'Calle'=>$this->input->get('Calle'),
-                    'Colonia'=>$this->input->get('Colonia'),
-                    'N_E'=>$this->input->get('N_E'),
-                    'N_I'=>$this->input->get('N_I'),
-                    'Municipio'=>$this->input->get('Municipio'),
-                    'Estado'=>$this->input->get('Estado'),
-                    'Id_Persona'=>$id_x,
-                    'Tabla_persona'=>"Entrenador",
-                );
-                $this->db->insert('direccion', $DireccionEntrenador);
-                if($this->db->affected_rows() > 0){
-                    $arr = array('titulo' => 'Busqueda de Email',
-                        'Mensaje' => 'Registro Exitoso ahora puedes iniciar sesión',
-                        'sugerencia' => 'Inicia Sesion'
-                    );
-            echo json_encode($arr);
-                }else{//borrar los datos de cuenta y de la tabla entrenador
-                    $Delete_Cuenta = $this->db->query('DELETE FROM playingtenis.cuenta WHERE  Id_Persona='.$id_x.'AND Rol="Entrenador"');
-                    $Delete_Entrenador = $this->db->query('DELETE FROM playingtenis.entrenador WHERE Token="'.$token.'"');
-                    
-                    $arr = array('titulo' => 'Error de Registro',
-                        'Mensaje' => 'Ocurrio un error intenta de nuevo',
-                        'sugerencia' => 'Intenta de nuevo'
-                    );
-                    echo json_encode($arr);
-                }
-            }else{//si no se registro hay que eliminar el registro del entrenador
-               $del_Entrenador = $this->db->query('DELETE FROM playingtenis.entrenador WHERE Token="'.$token.'"');
-                $arr = array('titulo' => 'Error de Registro',
-                    'Mensaje' => 'Ocurrio un error intenta de nuevo',
-                    'sugerencia' => 'Intenta de nuevo'
-                );
-                echo json_encode($arr);
-            }
-		}else{
-            $arr = array('titulo' => 'Error de Registro',
-                'Mensaje' => 'Ocurrio un error intenta de nuevo',
-                'sugerencia' => 'Intenta de nuevo'
+        $this->db->trans_begin();//comenzar la transacción
+        $this->db->insert('entrenador', $datosEntrenador);//insertar datos del entrenador
+        $query_user = $this->db->query('SELECT Id_Entrenador FROM entrenador WHERE Token="'.$token.'"');
+        $id_NuevoEntrenador = $query_user->result_array()[0]['Id_Entrenador'];//obtener id del entrenador
+        //array de los datos para la tabla cuenta
+        $datosCuenta = array(
+            'Email'=>$this->input->get('Email'),
+            'Contrasenia'=>$pass_encrip,
+            'Id_Rol'=>$rol,
+            'Id_Persona'=>$id_NuevoEntrenador
+        );
+        $this->InsertDireccion($this->input->get('Calle'),$this->input->get('Colonia'),$this->input->get('N_E'),$this->input->get('N_I'),$this->input->get('Municipio'),$this->input->get('Estado'),
+            $id_NuevoEntrenador,$rol,);
+        $this->db->insert('cuenta', $datosCuenta);
+        //VERIFICAR LA TRANSACCION
+        if($this->db->trans_status()===FALSE){//verificar el estado de la transaccion
+            $this->db->trans_rollback();//desahacer todo
+        }else{
+            $this->db->trans_commit();//terminar la transaccion y guardar
+            $arr = array(
+                'titulo' => 'Registro Cuenta',
+                'Mensaje' => 'Registro Exitoso',
+                'sugerencia' => 'Inicia Sesion'
             );
-            echo json_encode($arr);
+            echo json_encode($arr);//imprimir el mensaje
         }
     }
+
 
 
 /*//REGISTRAR NUVO JUGADOR
