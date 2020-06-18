@@ -22,5 +22,16 @@ class API_M extends CI_Model{
             echo json_encode($arr);
         }
     }
+    
+//VERIFICAR EXISTENCIA DE EMAIL ANTES DE REGISTRAR
+    public function ValidarEmail(){
+        $email = $this->input->get('Email');
+        $BuscarEmail = $this->db->query('SELECT * FROM cuenta WHERE Email="'.$email.'"');
+        if($BuscarEmail->num_rows() > 0){
+            return true;
+        }else{
+            return false;
+        }
+    }
 
 }?>
