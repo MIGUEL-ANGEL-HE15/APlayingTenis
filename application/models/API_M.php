@@ -9,45 +9,21 @@ class API_M extends CI_Model{
     public function IniciarSesionEntrenador(){
         $email_user = $this->input->get('user');
         $pass_encrip = hash('whirlpool',$this->input->get('password'));
-
-        $query_email = $this->db->query('SELECT * FROM cuenta WHERE Email="'.$email_user.'" AND Contrasenia="'.$pass_encrip.'" AND Rol="Entrenador"');
-        if($query_email->num_rows() > 0){
-            $Resultados = $query_email->result();
-            $Result_email;
-            $Result_pass;
-            $Result_IdCuenta;
-            $Result_IdPersona;
-
-            foreach($Resultados as $result){
-                $Result_email = $result->Email;
-                $Result_pass = $result->Contrasenia;
-                $Result_IdCuenta = $result->Id_Cuenta;
-                $Result_IdPersona = $result->Id_Persona;
-            }
-
-            if($email_user==$Result_email & $pass_encrip==$Result_pass){
-                $query = $this->db->query('SELECT cuenta.*  FROM entrenador,cuenta,direccion WHERE '.
-                    'cuenta.Id_Cuenta='.$Result_IdCuenta.'
-                    AND cuenta.Id_Persona=entrenador.Id_Entrenador
-                    AND direccion.Id_Persona=entrenador.Id_Entrenador
-                    AND direccion.Tabla_persona="Entrenador"');
-
-                    //return $query->result();
-                        $data = array(
-                            'Id_Cuenta' => $Result_IdCuenta,
-                            'Email' => $Result_email,
-                            'Contrasenia' => $Result_pass,
-                            'Rol' => 'Entrenador',
-                            'Id_Persona' => $Result_IdPersona
-                        );
-                        echo json_encode($data);
-            }else{
-                return false;
+        $query_email = $this->db->query('SELECT * FROM cuenta WHERE Email="'.$email_user.'" AND Contrasenia="'.$pass_encrip.'" AND Id_Rol=1');
+        if($query_email->result()!= NULL){
+            if($query_email->result_array()[0]['Email']===$email_user & $query_email->result_array()[0]['Contrasenia'] === $pass_encrip){
+                $id=$query_email->result_array()[0]['Id_Persona'];
+                $datos = $this->db->query('SELECT * FROM entrenador,direccion,cuenta WHERE entrenador.Id_Entrenador='.$id.' AND direccion.Id_Persona='.$id.' AND direccion.Id_Rol=1 AND cuenta.Id_Cuenta='.$query_email->result_array()[0]['Id_Cuenta']);
+                echo json_encode($datos->result_array());
             }
         }else{
-            return false;
+            $arr = array(
+                'titulo' => 'Registro Cuenta',
+                'Mensaje' => 'Usuario y/o Contraseña Incorrectos',
+                'sugerencia' => 'Inicia Sesion'
+            );
+            echo json_encode($arr);
         }
-        
     }
 
 
