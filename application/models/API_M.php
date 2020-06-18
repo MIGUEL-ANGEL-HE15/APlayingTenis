@@ -77,5 +77,9 @@ class API_M extends CI_Model{
             echo json_encode($arr);//imprimir el mensaje
         }
     }
-
+//OBTENER LA LISTA DE JUGADORES DE UN ENTRENADOR
+    public function ListaJugadoresEntrenador($id_entrenador){
+        $get_idJugador = $this->db->query('SELECT * FROM (SELECT @prmid_entrenador :='.$id_entrenador.' idEntrenador ) ALIAS, listajugadoresfamiliar;');
+        $id_P = $get_idJugador->result();
+        echo json_encode($get_idJugador->result());
 }?>
