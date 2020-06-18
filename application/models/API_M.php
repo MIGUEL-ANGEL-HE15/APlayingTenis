@@ -181,8 +181,8 @@ http://192.168.0.104/APlayingTenis/API/NuevoJugador/58/NombreJ/ApellidosJ/ManoJ/
             //mensaje de error
         }        
     }
-        
-        //OBTENER LA LISTA DE JUGADORES DE UN ENTRENADOR
+
+//OBTENER LA LISTA DE JUGADORES DE UN ENTRENADOR
     public function ListaJugadoresEntrenador($id_entrenador){
         $get_idJugador = $this->db->query('SELECT * FROM (SELECT @prmid_entrenador :='.$id_entrenador.' idEntrenador ) ALIAS, listajugadoresfamiliar;');
         $id_P = $get_idJugador->result();
