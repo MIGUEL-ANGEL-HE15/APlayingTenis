@@ -3,8 +3,6 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class API_M extends CI_Model{
-
-
 //INICIAR SESION
     public function IniciarSesionEntrenador(){
         $email_user = $this->input->get('user');
@@ -82,7 +80,6 @@ class API_M extends CI_Model{
             echo json_encode($arr);//imprimir el mensaje
         }
     }
-
 
 
 /*//REGISTRAR NUVO JUGADOR
