@@ -309,7 +309,19 @@ http://192.168.0.104/APlayingTenis/API/NuevoJugador/58/NombreJ/ApellidosJ/ManoJ/
             echo json_encode($arr);
         }
     }
-
+function InsertDireccion($calle,$colonia,$ne,$ni,$mun,$est,$id_persona,$id_rol){
+        $direccion = array(
+            'Calle' => $calle,
+            'Colonia' => $colonia,
+            'N_E' => $ne,
+            'N_I' => $ni,
+            'Municipio' => $mun,
+            'Estado' => $est,
+            'Id_Persona' => $id_persona,
+            'Id_Rol' => $id_rol
+        );
+        return $this->db->insert('direccion', $direccion);
+    }
 
     public function updateFamiliar(){
         $ID_FAMILIAR=$this->input->get('id_familiar');
