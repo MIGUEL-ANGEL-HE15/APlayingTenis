@@ -22,7 +22,7 @@ class API_M extends CI_Model{
             echo json_encode($arr);
         }
     }
-    
+
 //VERIFICAR EXISTENCIA DE EMAIL ANTES DE REGISTRAR
     public function ValidarEmail(){
         $email = $this->input->get('Email');
@@ -31,6 +31,50 @@ class API_M extends CI_Model{
             return true;
         }else{
             return false;
+        }
+    }
+    
+//REGISTRAR UN NUEVO ENTRENADOR
+    function InsertEntrenador(){
+        $token=$this->GenerarToken();//obtener token
+        $id_NuevoEntrenador;
+        $pass_encrip = hash('whirlpool',$this->input->get('Contrasenia'));//encriptar pass
+        $rol = 1;//numero del rol
+        //array de los datos del entrenador
+        $datosEntrenador = array(
+            'Nombre'=>$this->input->get('Nombre'),
+            'Apellidos'=>$this->input->get('Apellidos'),
+            'Sexo'=>$this->input->get('Sexo'),
+            'Club'=>$this->input->get('Club'),
+            'Email'=>$this->input->get('Email'),
+            'Telefono'=>$this->input->get('Telefono'),
+            'Token'=>$token
+            );
+        $this->db->trans_begin();//comenzar la transacción
+        $this->db->insert('entrenador', $datosEntrenador);//insertar datos del entrenador
+        $query_user = $this->db->query('SELECT Id_Entrenador FROM entrenador WHERE Token="'.$token.'"');
+        $id_NuevoEntrenador = $query_user->result_array()[0]['Id_Entrenador'];//obtener id del entrenador
+        //array de los datos para la tabla cuenta
+        $datosCuenta = array(
+            'Email'=>$this->input->get('Email'),
+            'Contrasenia'=>$pass_encrip,
+            'Id_Rol'=>$rol,
+            'Id_Persona'=>$id_NuevoEntrenador
+        );
+        $this->InsertDireccion($this->input->get('Calle'),$this->input->get('Colonia'),$this->input->get('N_E'),$this->input->get('N_I'),$this->input->get('Municipio'),$this->input->get('Estado'),
+            $id_NuevoEntrenador,$rol,);
+        $this->db->insert('cuenta', $datosCuenta);
+        //VERIFICAR LA TRANSACCION
+        if($this->db->trans_status()===FALSE){//verificar el estado de la transaccion
+            $this->db->trans_rollback();//desahacer todo
+        }else{
+            $this->db->trans_commit();//terminar la transaccion y guardar
+            $arr = array(
+                'titulo' => 'Registro Cuenta',
+                'Mensaje' => 'Registro Exitoso',
+                'sugerencia' => 'Inicia Sesion'
+            );
+            echo json_encode($arr);//imprimir el mensaje
         }
     }
 
