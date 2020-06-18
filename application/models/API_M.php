@@ -33,7 +33,7 @@ class API_M extends CI_Model{
             return false;
         }
     }
-    
+
 //REGISTRAR UN NUEVO ENTRENADOR
     function InsertEntrenador(){
         $token=$this->GenerarToken();//obtener token
@@ -82,4 +82,9 @@ class API_M extends CI_Model{
         $get_idJugador = $this->db->query('SELECT * FROM (SELECT @prmid_entrenador :='.$id_entrenador.' idEntrenador ) ALIAS, listajugadoresfamiliar;');
         $id_P = $get_idJugador->result();
         echo json_encode($get_idJugador->result());
+
+//GENERADOR DE TOKEN
+    public function GenerarToken($length = 8) {
+        return substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@%$#=-!"), 0, $length);
+    }
 }?>
